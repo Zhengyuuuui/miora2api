@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>miora2api Console</title>
+<style>
+:root { --bg:#0d1117; --card:#161b22; --border:#30363d; --text:#e6edf3; --muted:#8b949e; --accent:#1f6feb; --accent2:#58a6ff; --green:#3fb950; --red:#f85149; --yellow:#d29922; --purple:#a371f7; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+header { background:var(--card); border-bottom:1px solid var(--border); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; flex-wrap:wrap; gap:8px; }
+header h1 { font-size:18px; font-weight:600; display:flex; align-items:center; gap:10px; }
+.badge { color:var(--muted); font-size:12px; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+.dot-ok { background:var(--green); box-shadow:0 0 6px var(--green); }
+.dot-warn { background:var(--yellow); }
+.dot-bad { background:var(--red); }
+nav { display:flex; gap:4px; margin-left:24px; flex-wrap:wrap; }
+nav a { color:var(--muted); text-decoration:none; padding:6px 12px; border-radius:8px; font-size:13px; cursor:pointer; }
+nav a:hover { color:var(--text); background:rgba(255,255,255,.05); }
+nav a.active { color:var(--text); background:rgba(88,166,255,.15); }
+main { max-width:1280px; margin:0 auto; padding:24px 32px; }
+.page { display:none; }
+.page.active { display:block; }
+.section { margin-bottom:28px; }
+.section-title { font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:24px; }
+.stat { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 20px; }
+.stat-value { font-size:26px; font-weight:700; }
+.stat-value small { font-size:14px; font-weight:400; color:var(--muted); }
+.stat-label { font-size:12px; color:var(--muted); margin-top:2px; }
+.reg-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+.field { display:flex; flex-direction:column; gap:4px; }
+.field label { font-size:12px; color:var(--muted); }
+.field input, .field select, .field textarea { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text); font-size:14px; }
+.field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--accent); }
+.btn { padding:8px 16px; border-radius:8px; border:none; cursor:pointer; font-size:14px; font-weight:500; transition:all .15s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent2); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+.btn-sm { padding:5px 12px; font-size:12px; border-radius:6px; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { border-color:var(--accent); }
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; padding:8px 12px; border-bottom:1px solid var(--border); }
+td { padding:9px 12px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,.02); }
+.tag { display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; font-weight:600; white-space:nowrap; }
+.tag-image { background:rgba(88,166,255,.15); color:var(--accent2); }
+.tag-video { background:rgba(163,113,247,.18); color:#c9a6ff; }
+.tag-3d { background:rgba(210,153,34,.15); color:var(--yellow); }
+.tag-three_d, .tag-ui { background:rgba(88,166,255,.10); color:var(--muted); }
+.tag-running { background:rgba(210,153,34,.15); color:var(--yellow); }
+.tag-completed, .tag-succeeded, .tag-ok, .tag-active, .tag-free { background:rgba(63,185,80,.15); color:var(--green); }
+.tag-failed { background:rgba(248,81,73,.15); color:var(--red); }
+.tag-pending, .tag-processing { background:rgba(88,166,255,.15); color:var(--accent2); }
+.tag-cooldown { background:rgba(210,153,34,.15); color:var(--yellow); }
+.tag-off, .tag-unknown { background:rgba(139,148,158,.15); color:var(--muted); }
+.tag-affordable { background:rgba(63,185,80,.12); color:var(--green); }
+.tag-moderate { background:rgba(210,153,34,.12); color:var(--yellow); }
+.tag-expensive { background:rgba(248,81,73,.12); color:var(--red); }
+.note { font-size:12px; color:var(--muted); margin-top:10px; line-height:1.6; }
+.empty { text-align:center; color:var(--muted); padding:28px; }
+code { background:rgba(255,255,255,.06); padding:1px 5px; border-radius:4px; font-size:12px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+a { color:var(--accent2); }
+.gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+.thumb { background:var(--bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.thumb img, .thumb video { width:100%; height:150px; object-fit:cover; display:block; background:#000; }
+.thumb .meta { padding:8px 10px; font-size:11px; color:var(--muted); }
+.thumb .meta b { color:var(--text); font-size:12px; display:block; margin-bottom:2px; }
+.mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+.warn-box { background:rgba(210,153,34,.08); border:1px solid rgba(210,153,34,.3); border-radius:10px; padding:12px 16px; font-size:12px; color:var(--yellow); margin-bottom:16px; }
+.ok-box { background:rgba(63,185,80,.08); border:1px solid rgba(63,185,80,.3); border-radius:10px; padding:12px 16px; font-size:12px; color:var(--green); margin-bottom:16px; }
+.filter-bar { display:flex; gap:8px; flex-wrap:wrap; }
+.filter-bar input, .filter-bar select { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--text); font-size:13px; }
+pre { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px; overflow-x:auto; font-size:11px; line-height:1.5; color:var(--muted); max-height:280px; }
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center">
+    <h1><span class="dot dot-ok" id="healthDot"></span>miora2api</h1>
+    <nav>
+      <a class="active" data-page="overview">总览</a>
+      <a data-page="models">模型</a>
+      <a data-page="generate">生成</a>
+      <a data-page="media">产物</a>
+      <a data-page="costs">成本</a>
+      <a data-page="accounts">账号</a>
+      <a data-page="usage">账单</a>
+      <a data-page="logs">日志</a>
+    </nav>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span class="badge">port <b id="hdrPort">4690</b></span>
+    <span class="badge" id="creditsBadge">credits: -</span>
+    <span class="badge" id="lastRefresh">-</span>
+    <button class="btn btn-outline btn-sm" onclick="refresh()">刷新</button>
+  </div>
+</header>
+<main>
+
+<div class="page active" id="page-overview">
+  <div class="stats">
+    <div class="stat"><div class="stat-value" id="stCredits">-</div><div class="stat-label">可用 credits</div></div>
+    <div class="stat"><div class="stat-value" id="stModels">-</div><div class="stat-label">模型总数</div></div>
+    <div class="stat"><div class="stat-value" id="stAvail">-</div><div class="stat-label">free 档可用</div></div>
+    <div class="stat"><div class="stat-value" id="stMedia">-</div><div class="stat-label">已存产物</div></div>
+    <div class="stat"><div class="stat-value" id="stSpent">-</div><div class="stat-label">已消耗 credits</div></div>
+    <div class="stat"><div class="stat-value" id="stTier">-</div><div class="stat-label">账号 tier</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">按媒体类型</div>
+    <div class="card" id="byTypeBox"><div class="empty">加载中…</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">实测能力边界</div>
+    <div class="card">
+      <div class="ok-box" style="margin:0 0 10px">
+        <b>6 种 type 全部实测跑通：</b>
+        <code>text_to_image</code> / <code>image_to_image</code>（6.7c）、
+        <code>text_to_video</code> / <code>image_to_video</code>（54c）、
+        <code>text_to_3d</code> / <code>image_to_3d</code>（11.52c）。
+        官方账单证实<b>图生与文生同价</b>（image 走独立键 <code>image.edit</code>，video/3d 只有 <code>generate</code>）。
+      </div>
+      <div class="note">
+        <b>参考图链路：</b><code>GET /api/ai/cos/sts-tokens</code>（30min）→ COS <code>PUT</code> → <code>fileKey</code> 喂给生成接口。
+        <b>⚠ 三种媒体参考图字段不同：</b>image/3d 用 <code>imageFileKeys[]</code>，video 必须用 <code>firstImageFileKey</code>（首帧）且时长是 <code>duration</code>。
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">快速端点</div>
+    <div class="card">
+      <pre>GET  /v1/models                      # 41 模型，免登录
+GET  /v1/tiers                       # 11 档 LLM（仅信息）
+POST /admin/upload                   # 上传参考图 → fileKey
+POST /v1/images/generations          # 同步等到 completed；stream:true 伪流式
+POST /v1/videos/generations          # wait:false 异步入队
+POST /v1/3d/generations              # 输出 GLB/FBX/STL/USDZ
+GET  /v1/tasks/{id}                  # 进度 + 签名 URL
+GET  /v1/media                       # 已存产物
+GET  /v1/media/{id}/refresh          # 签名过期重签(3600s)
+GET  /v1/costs                       # 成本矩阵
+GET  /v1/stats                       # console 数据源
+GET  /health</pre>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-models">
+  <div class="section">
+    <div class="section-title">
+      <span>模型清单</span>
+      <div class="filter-bar">
+        <input id="mSearch" placeholder="搜索 model / label…" oninput="renderModels()">
+        <select id="mType" onchange="renderModels()">
+          <option value="">全部类型</option><option value="image">image</option>
+          <option value="video">video</option><option value="three_d">3D</option><option value="ui">ui</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <div id="modelSummary" class="note" style="margin:0 0 10px"></div>
+      <table>
+        <thead><tr><th>modelId</th><th>名称</th><th>类型</th><th>可用</th><th>价位</th><th>分辨率</th><th>比例</th><th>工具</th><th>参考图上限</th><th>时长/预估</th></tr></thead>
+        <tbody id="modelBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-generate">
+  <div class="section">
+    <div class="section-title">提交生成任务</div>
+    <div class="card">
+      <div class="reg-row" style="margin-bottom:14px">
+        <div class="field" style="min-width:110px"><label>类型</label>
+          <select id="gType" onchange="onTypeChange()">
+            <option value="image">图像</option><option value="video">视频</option><option value="three_d">3D</option>
+          </select>
+        </div>
+        <div class="field" style="flex:2;min-width:240px"><label>模型</label><select id="gModel"></select></div>
+        <div class="field" style="min-width:110px"><label>分辨率</label><select id="gRes"></select></div>
+        <div class="field" style="min-width:110px"><label>比例</label><select id="gRatio"></select></div>
+        <div class="field" style="width:90px;display:none" id="gSecondsWrap"><label>时长</label><select id="gSeconds"></select></div>
+        <div class="field" style="width:80px"><label>数量</label><input id="gN" type="number" value="1" min="1" max="4"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px"><label>Prompt</label>
+        <textarea id="gPrompt" rows="3" style="resize:vertical" placeholder="a red apple on white background"></textarea>
+      </div>
+      <div class="warn-box" style="display:none;margin-bottom:12px" id="i2vNote">
+        <b>video 的参考图走 <code>firstImageFileKey</code> 首帧字段</b>（不是 imageFileKeys），
+        时长字段是 <code>duration</code>（秒）。上传后的 fileKey 会自动作为首帧使用。
+      </div>
+      <div class="field" style="margin-bottom:12px">
+        <label>参考图 <span id="gRefLimitHint" style="color:var(--muted);font-weight:400"></span></label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="gRefFile" type="file" accept="image/*" multiple style="flex:1;min-width:220px">
+          <button class="btn btn-outline btn-sm" id="gUpload" onclick="uploadRef()">上传到 COS</button>
+          <button class="btn btn-outline btn-sm" id="gRefClear" onclick="clearRefs()">清空</button>
+        </div>
+        <input id="gRefs" placeholder="上传后自动填入；也可手填 file/xxx/... 多个用逗号分隔" style="margin-top:8px">
+        <div class="note" style="margin:6px 0 0" id="gRefState"></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="gGo" onclick="submitGen()">生成（同步等待）</button>
+        <button class="btn btn-outline" id="gGoAsync" onclick="submitGen(true)">仅入队</button>
+        <span class="note" style="margin:0" id="gHint"></span>
+      </div>
+      <div class="note" style="color:var(--yellow)">⚠ 提交会真实消耗 credits。图像约 6~7c/张，3D 约 11.5c/个，视频约 54c/条。</div>
+    </div>
+  </div>
+  <div class="section"><div class="section-title">结果</div><div class="card"><div id="genOut" class="empty">尚未提交</div></div></div>
+</div>
+
+<div class="page" id="page-media">
+  <div class="section">
+    <div class="section-title">
+      <span>已存产物</span>
+      <div class="filter-bar">
+        <select id="medType" onchange="renderMedia()">
+          <option value="">全部</option><option value="image">image</option>
+          <option value="video">video</option><option value="3d">3d</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="refreshExpired()">重签所有过期 URL</button>
+      </div>
+    </div>
+    <div class="note" style="margin-bottom:10px">签名 URL 有效期 <b>3600s</b>，但 <code>file_key</code> 永久有效——过期后重签即可，无需重新生成。</div>
+    <div class="gallery" id="mediaBox"><div class="empty">加载中…</div></div>
+  </div>
+</div>
+
+<div class="page" id="page-costs">
+  <div class="section">
+    <div class="section-title">成本矩阵（本地记录）</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>模型</th><th>类型</th><th>分辨率</th><th>次数</th><th>成功</th><th>平均 credits</th><th>区间</th><th>平均秒</th></tr></thead>
+        <tbody id="costBody"></tbody>
+      </table>
+      <div class="note">本地 <code>cost_matrix</code> 表。官方权威账单见「账单」页。</div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-accounts">
+  <div class="section">
+    <div class="section-title">账号池</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>userId</th><th>标签</th><th>状态</th><th>余额</th><th>套餐</th><th>地区</th><th>请求</th><th>成功</th><th>失败</th><th>最后使用</th></tr></thead>
+        <tbody id="accBody"></tbody>
+      </table>
+      <div class="note">轮转：跳过禁用/冷却/余额≤0，优先最少使用。401/403 自动冷却 5 分钟；token 失效会自动用 refresh_token 续期。</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">浏览器登录导入</div>
+    <div class="card">
+      <div class="ok-box" style="margin:0 0 12px">
+        点「启动 / 连接」后<b>自动打开 miora 页面并开始后台监听</b> → 你在里面用 Google/GitHub 登录，
+        <b>登录成功会自动导入，不用再点任何按钮</b>。若该浏览器已登录，则立即自动导入。
+        全程只读 localStorage，不接触密码。<br>
+        <span style="color:var(--muted)">
+          · <b>启动独立浏览器</b>：新建临时 profile，不影响你日常账号，用完自动清理<br>
+          · <b>连接已有端口</b>：在你已开的浏览器里新开一个标签页，不动其他标签<br>
+          · 端口已被占用时会自动降级为「连接」
+        </span>
+      </div>
+      <div class="reg-row" style="margin-bottom:12px">
+        <div class="field"><label>模式</label>
+          <select id="blMode">
+            <option value="launch">启动独立浏览器（干净，推荐）</option>
+            <option value="attach">连接已有调试端口（如 9366/9367）</option>
+          </select>
+        </div>
+        <div class="field"><label>调试端口</label><input id="blPort" type="number" value="9222" style="width:110px"></div>
+        <div class="field" style="flex:1;min-width:240px"><label>浏览器路径（留空自动探测）</label>
+          <input id="blPath" placeholder="自动探测 Chrome / Edge" style="width:100%"></div>
+        <button class="btn btn-primary" id="blStartBtn" onclick="blStart()">启动 / 连接</button>
+        <button class="btn btn-outline" onclick="blProbe()">检测</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" id="blImportBtn" onclick="blImport(true)">立即读取</button>
+        <button class="btn btn-outline btn-sm" onclick="blClose()">关闭浏览器会话</button>
+        <span class="note" style="margin:0" id="blStatus">未启动</span>
+      </div>
+      <div id="blDetail" class="note"></div>
+      <div class="note" style="color:var(--accent2)" id="blWatch"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">导入账号（手动）</div>
+    <div class="card">
+      <div class="note" style="margin:0 0 10px">从浏览器 <code>localStorage["authToken"]</code> 取值（<code>refreshToken</code> 可选，用于自动续期）。</div>
+      <div class="reg-row">
+        <div class="field"><label>userId</label><input id="aId" style="width:170px"></div>
+        <div class="field" style="flex:1;min-width:300px"><label>authToken</label><input id="aTok" style="width:100%"></div>
+        <div class="field" style="flex:1;min-width:220px"><label>refreshToken</label><input id="aRt" style="width:100%"></div>
+        <div class="field"><label>标签</label><input id="aLabel" style="width:150px"></div>
+        <div class="field"><label>地区</label><input id="aCountry" style="width:70px" placeholder="SG"></div>
+        <button class="btn btn-primary" onclick="addAccount()">导入</button>
+      </div>
+      <div id="aOut" class="note"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-usage">
+  <div class="section">
+    <div class="section-title">官方账单（上游权威）</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>记录 ID</th><th>时间</th><th>类型</th><th>原因</th><th>参数</th><th>credits</th></tr></thead>
+        <tbody id="usageBody"></tbody>
+      </table>
+      <div class="note">来源 <code>GET /api/ai/billing/records/usage</code>。唯一权威计费记录，本地记录若有偏差以本页为准。</div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-logs">
+  <div class="section">
+    <div class="section-title">请求日志</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>时间</th><th>方法</th><th>端点</th><th>状态</th><th>code</th><th>ms</th><th>备注</th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+<script>
+const API = "";
+let S = null;
+
+document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => {
+  document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  a.classList.add('active');
+  document.getElementById('page-' + a.dataset.page).classList.add('active');
+}));
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ts(x){ return x ? new Date(x*1000).toLocaleString('zh-CN',{hour12:false}) : '-'; }
+function tag(t, txt){ return `<span class="tag tag-${t}">${esc(txt||t)}</span>`; }
+
+async function refresh(){
+  try{
+    const r = await fetch(API + '/v1/stats');
+    S = await r.json();
+    document.getElementById('lastRefresh').textContent = '更新 ' + new Date().toLocaleTimeString('zh-CN',{hour12:false});
+    renderAll();
+  }catch(e){
+    document.getElementById('healthDot').className = 'dot dot-bad';
+    document.getElementById('lastRefresh').textContent = '错误: ' + e.message;
+  }
+}
+
+function renderAll(){
+  const d = S || {};
+  document.getElementById('hdrPort').textContent = (d.bridge && d.bridge.port) || 4690;
+  document.getElementById('healthDot').className = 'dot ' + (d.upstream_error ? 'dot-warn' : 'dot-ok');
+  document.getElementById('creditsBadge').textContent = 'credits: ' + (d.credits != null ? d.credits : '-');
+  renderOverview(); renderModels(); renderMedia(); renderCosts();
+  renderAccounts(); renderUsage(); renderLogs();
+}
+
+function renderOverview(){
+  const d = S || {}, m = d.models || {};
+  document.getElementById('stCredits').textContent = d.credits != null ? d.credits : '-';
+  document.getElementById('stModels').textContent = m.total != null ? m.total : '-';
+  const av = Object.values(m.byType||{}).reduce((a,b)=>a+(b.available||0),0);
+  document.getElementById('stAvail').innerHTML = av + '<small> / ' + (m.total||0) + '</small>';
+  document.getElementById('stMedia').textContent = (d.media||[]).length;
+  const spent = (d.usage||[]).filter(u=>u.creditDelta<0).reduce((a,b)=>a+Math.abs(b.creditDelta),0);
+  document.getElementById('stSpent').textContent = spent ? spent.toFixed(1) : '-';
+  const acc = (d.accounts||[])[0];
+  document.getElementById('stTier').textContent = (m.userTier||'-') + (acc && acc.plan ? ' / '+acc.plan : '');
+  const bt = m.byType || {};
+  const names = {image:'图像', video:'视频', three_d:'3D', ui:'UI分析'};
+  let h = '<div class="stats" style="margin:0">';
+  for (const [k,v] of Object.entries(bt))
+    h += `<div class="stat"><div class="stat-value">${v.available}<small> / ${v.total}</small></div><div class="stat-label">${esc(names[k]||k)}</div></div>`;
+  h += '</div>';
+  if (d.upstream_error) h += `<div class="warn-box" style="margin:0">上游告警: ${esc(d.upstream_error)}</div>`;
+  document.getElementById('byTypeBox').innerHTML = h;
+}
+
+function onTypeChange(){
+  const t = document.getElementById('gType').value;
+  document.getElementById('i2vNote').style.display = (t==='video') ? '' : 'none';
+  const ms = ((S&&S.models&&S.models.list)||[]).filter(m => m.contentType === t);
+  const sel = document.getElementById('gModel');
+  sel.innerHTML = ms.map(m => `<option value="${esc(m.modelId)}" ${m.available?'':'disabled'}>${esc(m.modelId)} — ${esc(m.label)}${m.available?'':' (不可用)'}</option>`).join('');
+  if (ms.length) { const f = ms.find(m=>m.available) || ms[0]; sel.value = f.modelId; }
+  onModelChange();
+}
+function onModelChange(){
+  const id = document.getElementById('gModel').value;
+  const t = document.getElementById('gType').value;
+  const m = ((S&&S.models&&S.models.list)||[]).find(x=>x.modelId===id && x.contentType===t);
+  const rsel = document.getElementById('gRes'), asel = document.getElementById('gRatio');
+  const res = (m&&m.resolutions)||[], rat = (m&&m.aspectRatios)||[];
+  rsel.innerHTML = res.length ? res.map(x=>`<option ${x===(m.defaultResolution)?'selected':''}>${esc(x)}</option>`).join('') : '<option>-</option>';
+  rsel.disabled = !res.length;
+  asel.innerHTML = rat.length ? rat.map((x,i)=>`<option ${i===0?'selected':''}>${esc(x)}</option>`).join('') : '<option>-</option>';
+  asel.disabled = !rat.length;
+  const dsec = document.getElementById('gSeconds'), sw = document.getElementById('gSecondsWrap');
+  const sr = m && m.secondsRange;
+  if (sr && sr.min !== undefined) {
+    sw.style.display = '';
+    dsec.innerHTML = '';
+    for (let s = sr.min; s <= sr.max; s++) dsec.innerHTML += `<option ${s===m.defaultSeconds?'selected':''}>${s}s</option>`;
+  } else { sw.style.display = 'none'; }
+  updateRefLimit(m);
+  const bits = [];
+  if (m) {
+    if (m.tools && m.tools.length) bits.push('工具: ' + m.tools.join(', '));
+    const ri = m.refInfo || {};
+    if (ri.supported === false) bits.push(ri.note || '不支持参考图');
+    else if (ri.known && ri.max != null) bits.push('参考图 ≤' + ri.max + ' 张');
+    if (m.estSeconds) bits.push('预估 ' + m.estSeconds + 's');
+    if (m.secondsRange) bits.push('时长 ' + m.secondsRange.min + '-' + m.secondsRange.max + 's (默认' + (m.defaultSeconds||'-') + 's)');
+    if (m.generateTypes) bits.push('生成类型: ' + m.generateTypes.join(', '));
+    if (m.resultFormats) bits.push('输出: ' + m.resultFormats.join('/'));
+  }
+  document.getElementById('gHint').textContent = bits.join(' ｜ ');
+}
+function refCell(m){
+  const ri = m.refInfo || {};
+  if(ri.supported === false) return tag('off','不支持');
+  if(ri.known && ri.max != null){
+    const cls = ri.max >= 14 ? 'ok' : (ri.max >= 4 ? 'moderate' : 'expensive');
+    return tag(cls, ri.max + ' 张');
+  }
+  return tag('unknown','未声明');
+}
+function renderModels(){
+  const list = ((S&&S.models&&S.models.list)||[]);
+  const q = (document.getElementById('mSearch').value||'').toLowerCase();
+  const ty = document.getElementById('mType').value;
+  const rows = list.filter(m => (!ty || m.contentType===ty) &&
+    (!q || (m.modelId||'').toLowerCase().includes(q) || (m.label||'').toLowerCase().includes(q)));
+  const names = {image:'image', video:'video', three_d:'3D', ui:'ui'};
+  document.getElementById('modelSummary').textContent = `显示 ${rows.length} / ${list.length}｜tier=${(S&&S.models&&S.models.userTier)||'-'}`;
+  document.getElementById('modelBody').innerHTML = rows.map(m => `<tr>
+    <td class="mono">${esc(m.modelId)}</td><td>${esc(m.label||'')}</td>
+    <td>${tag(m.contentType, names[m.contentType]||m.contentType)}</td>
+    <td>${m.available ? tag('ok','可用') : tag('off','锁死')}</td>
+    <td>${m.priceTier ? tag(m.priceTier, m.priceTier) : '-'}</td>
+    <td class="mono">${esc((m.resolutions||[]).join(' '))||'-'}</td>
+    <td class="mono">${(m.aspectRatios||[]).length} 种</td>
+    <td class="mono" style="font-size:11px">${esc((m.tools||[]).join(' '))||'-'}</td>
+    <td>${refCell(m)}</td>
+    <td>${m.secondsRange ? (m.secondsRange.min+'-'+m.secondsRange.max+'s') : (m.estSeconds?m.estSeconds+'s':'-')}</td>
+  </tr>`).join('') || '<tr><td colspan="10" class="empty">无匹配</td></tr>';
+}
+
+function renderMedia(){
+  const ty = document.getElementById('medType').value;
+  const norm = v => v==='3d' ? '3d' : v;
+  const rows = ((S&&S.media)||[]).filter(m => !ty || norm(m.media_type)===norm(ty));
+  document.getElementById('mediaBox').innerHTML = rows.map(m => {
+    const u = m.signed_url || '';
+    const prev = m.media_type==='video'
+      ? `<video src="${esc(u)}" controls preload="metadata"></video>`
+      : (m.media_type==='3d' ? `<div style="height:150px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">3D 产物</div>`
+      : `<img src="${esc(u)}" loading="lazy" onerror="this.parentNode.innerHTML='<div style=\\'height:150px;display:flex;align-items:center;justify-content:center;color:var(--red);font-size:11px\\'>URL 已过期，点上方重签</div>'">`);
+    const dim = m.media_type==='3d'
+      ? `${(m.width||0).toLocaleString()} 面 / ${(m.height||0).toLocaleString()} 顶点`
+      : `${m.width||'?'}x${m.height||'?'}`;
+    return `<div class="thumb">${prev}<div class="meta">
+      <b>${esc(m.model||'')}</b>
+      ${esc(m.file_ext||'')} ${dim} ${m.duration_s?m.duration_s+'s':''} ${m.bytes?Math.round(m.bytes/1024).toLocaleString()+'KB':''}<br>
+      <span class="mono" style="font-size:10px">${esc((m.file_key||'').slice(0,44))}…</span><br>
+      ${m.url_expired ? tag('cooldown','签名过期') : tag('ok','签名有效')}
+      <a href="${esc(u)}" target="_blank" style="font-size:11px">打开</a>
+      </div></div>`;
+  }).join('') || '<div class="empty">暂无产物</div>';
+}
+async function refreshExpired(){
+  const rows = ((S&&S.media)||[]).filter(m=>m.url_expired);
+  if (!rows.length) return alert('没有过期的 URL');
+  for (const m of rows) { try { await fetch(`${API}/v1/media/${m.id}/refresh`); } catch(e){} }
+  refresh();
+}
+
+function renderCosts(){
+  const rows = (S&&S.costs)||[];
+  document.getElementById('costBody').innerHTML = rows.map(c => `<tr>
+    <td class="mono">${esc(c.model)}</td><td>${tag(c.media_type, c.media_type)}</td>
+    <td>${esc(c.resolution||'-')}</td><td>${c.runs}</td><td>${c.ok_runs}</td>
+    <td><b>${c.avg_credits ?? '-'}</b></td>
+    <td class="mono" style="font-size:11px">${c.min_credits??'-'} ~ ${c.max_credits??'-'}</td>
+    <td>${c.avg_seconds ?? '-'}</td></tr>`).join('')
+    || '<tr><td colspan="8" class="empty">暂无成本记录</td></tr>';
+}
+function renderAccounts(){
+  const rows = (S&&S.accounts)||[];
+  document.getElementById('accBody').innerHTML = rows.map(a => `<tr>
+    <td class="mono">${esc(a.id)}</td><td>${esc(a.label||'')}</td>
+    <td>${tag(a.status||'unknown', a.status)}</td>
+    <td><b>${a.credits ?? '-'}</b> <small style="color:var(--muted)">/ ${a.credit_total ?? '-'}</small></td>
+    <td>${esc(a.plan||'-')}</td><td>${esc(a.country||'-')}</td>
+    <td>${a.requests}</td><td style="color:var(--green)">${a.successes}</td>
+    <td style="color:var(--red)">${a.failures}</td>
+    <td class="mono" style="font-size:11px">${ts(a.last_used)}</td></tr>`).join('')
+    || '<tr><td colspan="10" class="empty">未导入账号</td></tr>';
+}
+function renderUsage(){
+  const rows = (S&&S.usage)||[];
+  document.getElementById('usageBody').innerHTML = rows.map(u => {
+    const d = u.detail||{};
+    return `<tr><td class="mono">${esc(u.id)}</td>
+      <td class="mono" style="font-size:11px">${esc(u.occurredAt)}</td>
+      <td>${tag(u.type==='consume'?'failed':'ok', u.type)}</td>
+      <td class="mono" style="font-size:11px">${esc((d.key||'').split('.').pop())}</td>
+      <td class="mono" style="font-size:11px">${esc(JSON.stringify(d.params||{}))}</td>
+      <td style="color:${u.creditDelta<0?'var(--red)':'var(--green)'};font-weight:600">${u.creditDelta}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">暂无账单记录</td></tr>';
+}
+function renderLogs(){
+  const rows = (S&&S.logs)||[];
+  document.getElementById('logBody').innerHTML = rows.map(l => `<tr>
+    <td class="mono" style="font-size:11px">${ts(l.ts)}</td><td>${esc(l.method||'')}</td>
+    <td class="mono" style="font-size:11px">${esc(l.endpoint||'')}</td>
+    <td>${esc(l.status||'-')}</td><td class="mono" style="font-size:11px">${esc(l.code||'-')}</td>
+    <td>${l.ms?Math.round(l.ms):'-'}</td>
+    <td style="font-size:11px;color:var(--muted)">${esc(l.note||'')}</td></tr>`).join('')
+    || '<tr><td colspan="7" class="empty">暂无日志</td></tr>';
+}
+
+// ---------- 参考图上限（随模型变化） ----------
+function currentModel(){
+  const id = document.getElementById('gModel').value;
+  const t  = document.getElementById('gType').value;
+  return ((S&&S.models&&S.models.list)||[]).find(x=>x.modelId===id && x.contentType===t) || null;
+}
+function currentRefLimit(){
+  const m = currentModel();
+  const ri = (m && m.refInfo) || {};
+  return { m, ri, max: ri.max, supported: ri.supported, known: ri.known, note: ri.note||'' };
+}
+function updateRefLimit(){
+  const { m, ri, max, supported, known, note } = currentRefLimit();
+  const hint = document.getElementById('gRefLimitHint');
+  const state = document.getElementById('gRefState');
+  const inp = document.getElementById('gRefFile');
+  if(!m){ hint.textContent=''; state.textContent=''; return; }
+
+  let txt, color = 'var(--muted)';
+  if(supported === false){
+    txt = '· 不支持参考图'; color = 'var(--red)';
+  } else if(known && max != null){
+    txt = '· 最多 ' + max + ' 张'; color = max >= 14 ? 'var(--green)' : 'var(--yellow)';
+  } else {
+    txt = '· 上限未声明'; color = 'var(--yellow)';
+  }
+  hint.innerHTML = esc(txt.replace(/^· /,''));
+  hint.style.color = color;
+
+  inp.disabled = (supported === false);
+  state.innerHTML = note ? '<span style="color:var(--yellow)">'+esc(note)+'</span>' : '';
+  renderRefState();
+}
+function renderRefState(){
+  const { max, supported, known } = currentRefLimit();
+  const refs = (document.getElementById('gRefs').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const el = document.getElementById('gRefState');
+  const base = el.dataset.note || '';
+  const bits = [];
+  if(refs.length) bits.push('已填 <b>'+refs.length+'</b> 张');
+  if(supported === false && refs.length) bits.push('<span style="color:var(--red)">该模型不支持参考图</span>');
+  else if(max != null && refs.length > max) bits.push('<span style="color:var(--red)">超出上限 '+max+' 张</span>');
+  else if(max != null && refs.length === max && refs.length>0) bits.push('<span style="color:var(--green)">已达上限</span>');
+  el.dataset.note = base;
+  el.innerHTML = bits.join(' ｜ ') + (base ? '<br>'+base : '');
+}
+function clearRefs(){
+  document.getElementById('gRefs').value = '';
+  document.getElementById('gRefFile').value = '';
+  renderRefState();
+}
+document.getElementById('gRefs').addEventListener('input', renderRefState);
+
+async function uploadRef(){
+  const files = [...document.getElementById('gRefFile').files];
+  if(!files.length) return alert('先选图片文件（可多选）');
+  const { max, supported, known } = currentRefLimit();
+  if(supported === false) return alert('当前模型不支持参考图');
+  let pick = files;
+  if(max != null && files.length > max){
+    if(!confirm(`${files.length} 张超出该模型上限 ${max} 张，只上传前 ${max} 张？`)) return;
+    pick = files.slice(0, max);
+  }
+  const btn = document.getElementById('gUpload');
+  btn.disabled = true; btn.textContent = `上传中… (0/${pick.length})`;
+  const keys = [];
+  try{
+    for(let i=0;i<pick.length;i++){
+      btn.textContent = `上传中… (${i+1}/${pick.length})`;
+      const b64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(pick[i]); });
+      const r = await fetch(API+'/admin/upload',{method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({data_urls:[b64], names:[pick[i].name]})});
+      const j = await r.json();
+      if(!r.ok) throw new Error(JSON.stringify(j));
+      keys.push(...j.image_file_keys);
+    }
+    const box = document.getElementById('gRefs');
+    const cur = box.value.split(',').map(s=>s.trim()).filter(Boolean);
+    box.value = [...new Set(cur.concat(keys))].join(',');
+    renderRefState();
+  }catch(e){ alert('上传失败: '+e.message); }
+  finally{ btn.disabled=false; btn.textContent='上传到 COS'; }
+}
+
+async function submitGen(asyncOnly){
+  const t = document.getElementById('gType').value;
+  const btn = asyncOnly ? document.getElementById('gGoAsync') : document.getElementById('gGo');
+  const out = document.getElementById('genOut');
+  const refs = (document.getElementById('gRefs').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const body = {
+    model: document.getElementById('gModel').value,
+    prompt: document.getElementById('gPrompt').value,
+    ...(t==='video' ? {first_image_file_key: refs[0]||null} : {image_file_keys: refs}),
+    resolution: document.getElementById('gRes').value,
+    aspect_ratio: document.getElementById('gRatio').value,
+    n: parseInt(document.getElementById('gN').value||'1',10),
+    wait: !asyncOnly,
+  };
+  const sec = document.getElementById('gSeconds');
+  if (sec.value && sec.value !== '-' && !sec.disabled) body.duration = parseInt(sec.value,10);
+  const path = t==='image' ? '/v1/images/generations' : (t==='video' ? '/v1/videos/generations' : '/v1/3d/generations');
+  btn.disabled = true;
+  out.innerHTML = '<div class="empty">提交中…（图像 ~15s，3D ~60-180s，视频 ~90s）</div>';
+  const t0 = Date.now();
+  try{
+    const r = await fetch(API+path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j = await r.json();
+    if(!r.ok){ out.innerHTML = `<div class="warn-box" style="margin:0">HTTP ${r.statusCode}<br><span class="mono">${esc(JSON.stringify(j))}</span></div>`; }
+    else {
+      out.innerHTML = `<div class="ok-box" style="margin:0 0 10px">成功（${((Date.now()-t0)/1000).toFixed(1)}s）</div><pre>${esc(JSON.stringify(j,null,2))}</pre>`;
+    }
+  }catch(e){ out.innerHTML = `<div class="warn-box" style="margin:0">${esc(e.message)}</div>`; }
+  btn.disabled = false;
+  refresh();
+}
+document.getElementById('gModel').addEventListener('change', onModelChange);
+
+// ---------- 浏览器登录导入 ----------
+let BL = { port: 9222, session_id: null, watching: false, timer: null };
+
+async function blProbe(){
+  const st = document.getElementById('blStatus');
+  st.textContent = '检测中…';
+  try{
+    const r = await fetch(API+'/admin/browser/status', {headers:{'Accept':'application/json'}});
+    const j = await r.json();
+    document.getElementById('blPath').placeholder = j.detected_path
+      ? '自动探测: ' + j.detected_path : '未探测到浏览器，请手动填路径';
+    const alive = (j.sessions||[]).length;
+    st.innerHTML = alive
+      ? `已有 ${alive} 个会话；端口 ` + j.sessions.map(x=>x.port+':'+x.status).join(', ')
+      : '未启动。探测到浏览器：' + (j.detected_path ? '<code>'+esc(j.detected_path)+'</code>' : '无');
+  }catch(e){ st.innerHTML = '<span style="color:var(--red)">'+esc(e.message)+'</span>'; }
+}
+
+async function blStart(){
+  const btn = document.getElementById('blStartBtn');
+  const st = document.getElementById('blStatus');
+  btn.disabled = true; st.textContent = '启动中…';
+  try{
+    const r = await fetch(API+'/admin/browser/launch', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        mode: document.getElementById('blMode').value,
+        port: Number(document.getElementById('blPort').value) || 9222,
+        path: document.getElementById('blPath').value.trim(),
+      })
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.detail || JSON.stringify(j));
+    BL.session_id = j.session_id; BL.port = j.port;
+    const opened = j.opened && j.opened.ok;
+    st.innerHTML = `已就绪（${esc(j.browser||'')}）端口 <b>${j.port}</b>`
+      + (opened ? '<br>✅ miora 页面已打开，请在该窗口/标签页登录，完成后点「读取并导入」。'
+                : '<br><span style="color:var(--red)">未能自动打开页面，请手动在浏览器里访问 miora.design</span>');
+    if (j.note) document.getElementById('blDetail').innerHTML += '<br>' + esc(j.note);
+    if (j.auto_imported && j.auto_imported.ok) {
+      st.innerHTML = `✅ 检测到已登录，<b>已自动导入</b> <code>${esc(j.auto_imported.label)}</code> 余额 <b>${j.auto_imported.credits}</b>`;
+      document.getElementById('blWatch').innerHTML = '';
+      BL.watching = false;
+      refresh();
+    } else {
+      startWatchPoll();
+    }
+    document.getElementById('blDetail').innerHTML =
+      `session: <code>${esc(j.session_id)}</code>${j.profile_dir?'<br>profile: <code>'+esc(j.profile_dir)+'</code>':''}`;
+  }catch(e){ st.innerHTML = '<span style="color:var(--red)">'+esc(e.message)+'</span>'; }
+  finally{ btn.disabled = false; }
+}
+
+function startWatchPoll(){
+  BL.watching = true;
+  const el = document.getElementById('blWatch');
+  let tick = 0;
+  clearInterval(BL.timer);
+  BL.timer = setInterval(async ()=>{
+    if(!BL.watching) return;
+    tick++;
+    el.innerHTML = `⏳ 等待登录中…（已监听 ${tick*3}s）请在浏览器里完成 Google/GitHub 登录，<b>登录后会自动导入</b>`;
+    try{
+      const r = await fetch(API+'/admin/browser/watch', {headers:{'Accept':'application/json'}});
+      const j = await r.json();
+      const w = (j.watchers||[])[0];
+      if(w && w.state === 'imported' && w.result){
+        clearInterval(BL.timer); BL.watching = false;
+        el.innerHTML = '';
+        document.getElementById('blStatus').innerHTML =
+          `✅ 已自动导入 <code>${esc(w.result.label)}</code> 余额 <b>${w.result.credits}</b>`;
+        refresh();
+      } else if(w && w.state === 'timeout'){
+        clearInterval(BL.timer); BL.watching = false;
+        el.innerHTML = '<span style="color:var(--yellow)">监听超时（5分钟），请重新点「启动 / 连接」</span>';
+      }
+    }catch(e){}
+  }, 3000);
+}
+
+async function blImport(watch){
+  const btn = document.getElementById('blImportBtn');
+  const st = document.getElementById('blStatus');
+  btn.disabled = true; st.textContent = '读取中…';
+  try{
+    const r = await fetch(API+'/admin/browser/import', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ port: BL.port, label: document.getElementById('aLabel')?.value || '',
+                             watch: !!watch })
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.detail || JSON.stringify(j));
+    if(j.watching){ st.textContent='已开启后台监听'; startWatchPoll(); }
+    else if(j.persisted){
+      st.innerHTML = `✅ 已导入 <code>${esc(j.label)}</code> 余额 <b>${j.credits}</b>`;
+      document.getElementById('blWatch').innerHTML='';
+      refresh();
+    }
+    else st.innerHTML = `✅ 读取成功（未入库）userId=${esc(j.userId)} 余额 ${j.credits}`;
+  }catch(e){ st.innerHTML = '<span style="color:var(--yellow)">'+esc(e.message)+'</span>'; }
+  finally{ btn.disabled = false; }
+}
+
+async function blClose(){
+  if(!BL.session_id) return (document.getElementById('blStatus').textContent = '没有由本服务启动的会话');
+  const r = await fetch(API+'/admin/browser/close?session_id='+encodeURIComponent(BL.session_id));
+  const j = await r.json();
+  document.getElementById('blStatus').textContent = j.ok ? '已关闭并清理 profile' : (j.error||'关闭失败');
+  if(j.ok){ BL.session_id = null; document.getElementById('blDetail').innerHTML='';
+            document.getElementById('blWatch').innerHTML='';
+            clearInterval(BL.timer); BL.watching=false; }
+}
+
+async function addAccount(){
+  const b = { id: document.getElementById('aId').value.trim(),
+    auth_token: document.getElementById('aTok').value.trim(),
+    refresh_token: document.getElementById('aRt').value.trim() || null,
+    label: document.getElementById('aLabel').value.trim(),
+    country: document.getElementById('aCountry').value.trim() || null };
+  const o = document.getElementById('aOut');
+  if(!b.id || !b.auth_token){ o.textContent = 'userId 与 authToken 必填'; return; }
+  const r = await fetch(API+'/admin/accounts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+  o.textContent = '导入结果: ' + JSON.stringify(await r.json());
+  refresh();
+}
+
+(async function(){
+  await refresh();
+  await blProbe();
+  onTypeChange();
+  setInterval(refresh, 30000);
+})();
+</script>
+</body>
+</html>

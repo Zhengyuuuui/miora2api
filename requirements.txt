@@ -1,0 +1,17 @@
+# miora2api bridge 运行时依赖
+#
+# 安装：
+#   pip3 install -r requirements.txt
+#   （macOS 若报 externally-managed-environment，加 --break-system-packages）
+
+fastapi>=0.110
+uvicorn>=0.27
+httpx>=0.26
+
+# 参考图上传：腾讯云 COS 直传（Miora 的 fileKey 就落在这里）
+#   曾尝试手写 COS V5 签名 → SignatureDoesNotMatch / AccessDenied；
+#   官方 SDK 一次成功，故不自己维护密码学实现。
+cos-python-sdk-v5>=1.9
+
+# 可选：开发期静态检查
+# pyflakes>=3.0

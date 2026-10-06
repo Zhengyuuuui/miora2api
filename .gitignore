@@ -1,0 +1,67 @@
+# ---- 运行产物（含敏感数据，勿提交）----
+miora.db
+miora.db-wal
+miora.db-shm
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ---- 媒体产物（Miora 生成物，动辄 40MB+）----
+media/
+*.glb
+*.fbx
+*.stl
+*.usdz
+*.obj
+*.mp4
+*.mov
+*.webm
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.gif
+
+# ---- 凭证（绝不可提交）----
+config.json
+*.env
+.env.*
+secrets*.json
+accounts.json
+*_token.txt
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ---- 日志 / 临时 ----
+*.log
+.DS_Store
+*.tmp
+*.bak
+*.orig
+*.swp
+*~
+
+# ---- 编辑器 ----
+.vscode/
+.idea/
+*.sublime-workspace
+
+# ---- 测试缓存 ----
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
