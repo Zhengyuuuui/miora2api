@@ -1,8 +1,49 @@
 # miora2api
 
-[Miora](https://miora.design)(腾讯 AI 创作平台)的媒体生成 → OpenAI 兼容网关。把 Miora 的图像/视频/3D 生成能力封装为 HTTP API,凭证与产物落 SQLite。
+## 这是什么
 
-**6 种生成 type 全部实测跑通**,41 个模型清单**免登录**可取。
+[Miora](https://miora.design)(腾讯 AI 创作平台)的**媒体生成 → OpenAI 兼容网关**。把它的图像/视频/3D 生成能力封装为 HTTP API,凭证与产物落 SQLite。
+
+**不是**通用 LLM chat 网关 —— Miora 的对话是黑盒 Agent,原因见下方「为什么没有 chat」。
+
+## 亮点
+
+- **6 种生成 type 全部实测跑通**(2026-10,非推测):文生/图生 × 图像/视频/3D
+- **41 个模型清单免登录可取**,free 档 40 个可用
+- **图生与文生同价** —— 官方账单核对,多给参考图不额外收费
+- **参考图上传**走腾讯云 COS 直传,`fileKey` 直接喂生成接口
+- **浏览器一键导入登录态** —— 只读 localStorage,不接触密码;已登录则立即导入,否则后台监听、登录后自动导入
+- 401 token 自愈(自动 `refresh_token` 续期)
+- 产物 `file_key` + `signed_url` 双存,签名 3600s 过期可重签,**不必重新生成**
+
+## 实测成本(官方账单核对)
+
+| 媒体 | 单价 | 说明 |
+|---|---|---|
+| 图像 | 6.7 c | 1024×1024 JPEG |
+| 3D | 11.52 c | GLB,约 147 万三角面,PBR 贴图 |
+| 视频 | 54 c | 5 秒 MP4 |
+
+## 为什么没有 chat
+
+Miora 的 LLM 是**有状态云端 Agent**,不是可直调的 API:
+
+1. 每请求需 `runtimeId`(绑 projectId)+ `acpLink` 临时 token;而 OpenAI 协议是无状态的
+2. 工具调用需**人工审批**(Socket.IO `TOOL_CONFIRMATION_PENDING`),无人值守会永久卡死
+3. 对话模型是**别名**(`standard→balanced-model`、`pro→primary-model`),真实上游不可见
+
+协议走 ACP(Agent Client Protocol)JSON-RPC,**无状态转换路径不存在**,故不做。需要通用对话请用 OpenAI / Anthropic 官方 API。
+
+## 快速开始
+
+```bash
+pip install -r requirements.txt
+python bridge.py                     # → http://127.0.0.1:4690
+```
+
+打开 `http://127.0.0.1:4690/console`,在「账号 → 浏览器登录导入」里点一次「启动 / 连接」,在弹出的浏览器里用 Google/GitHub 登录 Miora —— **登录成功会自动导入,不用再点按钮**。
+
+完整文档见 [README.md](README.md)。
 
 ## 端点
 
